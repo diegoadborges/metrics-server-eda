@@ -1,4 +1,6 @@
-CREATE TABLE IF NOT EXISTS metrics_dashboard (
+CREATE DATABASE IF NOT EXISTS metrics;
+
+CREATE TABLE IF NOT EXISTS metrics.dashboard (
     server_id String,
     cpu_usage Float64,
     memory_usage Float64,
@@ -7,7 +9,7 @@ CREATE TABLE IF NOT EXISTS metrics_dashboard (
 ENGINE = MergeTree
 ORDER BY (server_id, timestamp);
 
-CREATE TABLE IF NOT EXISTS detected_alerts (
+CREATE TABLE IF NOT EXISTS metrics.alerts (
     server_id String,
     alert_type String,
     metric_value Float64,
@@ -16,4 +18,3 @@ CREATE TABLE IF NOT EXISTS detected_alerts (
 )
 ENGINE = MergeTree
 ORDER BY (server_id, detected_at);
-

@@ -23,8 +23,8 @@ func Load() Config {
 		KafkaBrokers:       splitAndTrim(envOrDefault("KAFKA_BROKERS", "localhost:9092")),
 		KafkaTopic:         envOrDefault("KAFKA_TOPIC", "server-metrics"),
 		KafkaPartitions:    int32(envIntOrDefault("KAFKA_TOPIC_PARTITIONS", 3)),
-		ClickHouseAddr:     envOrDefault("CLICKHOUSE_ADDR", "localhost:9000"),
-		ClickHouseDatabase: envOrDefault("CLICKHOUSE_DATABASE", "default"),
+		ClickHouseAddr:     envOrDefault("CLICKHOUSE_ADDR", "localhost:9001"),
+		ClickHouseDatabase: envOrDefault("CLICKHOUSE_DATABASE", "metrics"),
 		ClickHouseUsername: envOrDefault("CLICKHOUSE_USER", "default"),
 		ClickHousePassword: os.Getenv("CLICKHOUSE_PASSWORD"),
 	}

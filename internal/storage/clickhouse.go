@@ -44,7 +44,7 @@ func (s *Store) Close() error {
 
 func (s *Store) InsertMetric(ctx context.Context, metric domain.MetricEvent) error {
 	return s.conn.Exec(ctx,
-		`INSERT INTO metrics_dashboard (server_id, cpu_usage, memory_usage, timestamp) VALUES (?, ?, ?, ?)`,
+		`INSERT INTO metrics.dashboard (server_id, cpu_usage, memory_usage, timestamp) VALUES (?, ?, ?, ?)`,
 		metric.ServerID,
 		metric.CPUUsage,
 		metric.MemoryUsage,
@@ -57,7 +57,7 @@ func (s *Store) InsertAlerts(ctx context.Context, alerts []domain.AlertEvent) er
 		return nil
 	}
 
-	batch, err := s.conn.PrepareBatch(ctx, `INSERT INTO detected_alerts (server_id, alert_type, metric_value, event_timestamp, detected_at)`)
+	batch, err := s.conn.PrepareBatch(ctx, `INSERT INTO metrics.alerts (server_id, alert_type, metric_value, event_timestamp, detected_at)`)
 	if err != nil {
 		return err
 	}
@@ -79,7 +79,7 @@ func (s *Store) InsertAlerts(ctx context.Context, alerts []domain.AlertEvent) er
 
 func (s *Store) InsertAlert(ctx context.Context, alert domain.AlertEvent) error {
 	return s.conn.Exec(ctx,
-		`INSERT INTO detected_alerts (server_id, alert_type, metric_value, event_timestamp, detected_at) VALUES (?, ?, ?, ?, ?)`,
+		`INSERT INTO metrics.alerts (server_id, alert_type, metric_value, event_timestamp, detected_at) VALUES (?, ?, ?, ?, ?)`,
 		alert.ServerID,
 		alert.AlertType,
 		alert.MetricValue,
