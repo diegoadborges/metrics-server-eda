@@ -15,9 +15,13 @@ func baseConfig(clientID string) *sarama.Config {
 	cfg := sarama.NewConfig()
 	cfg.Version = DefaultVersion
 	cfg.ClientID = clientID
-	cfg.Net.DialTimeout = 5 * time.Second
-	cfg.Net.ReadTimeout = 5 * time.Second
-	cfg.Net.WriteTimeout = 5 * time.Second
+	cfg.Net.DialTimeout = 10 * time.Second
+	cfg.Net.ReadTimeout = 30 * time.Second
+	cfg.Net.WriteTimeout = 10 * time.Second
+	cfg.Consumer.Group.Session.Timeout = 20 * time.Second
+	cfg.Consumer.Group.Heartbeat.Interval = 1 * time.Second
+	cfg.Consumer.MaxProcessingTime = 10 * time.Second
+
 	cfg.Metadata.Full = true
 	return cfg
 }
@@ -35,7 +39,12 @@ func EnsureTopic(brokers []string, clientID, topic string, partitions int32) err
 		ReplicationFactor: 1,
 	}
 
-	if err := admin.CreateTopic(topic, detail, false); err != nil && !errors.Is(err, sarama.ErrTopicAlreadyExists) {
+	if err := admin.CreateTopic(
+		topic,
+		detail,
+		false,
+	); err != nil &&
+		!errors.Is(err, sarama.ErrTopicAlreadyExists) {
 		return err
 	}
 
@@ -51,7 +60,10 @@ func NewSyncProducer(brokers []string, clientID string) (sarama.SyncProducer, er
 	return sarama.NewSyncProducer(brokers, cfg)
 }
 
-func NewConsumerGroup(brokers []string, groupID, clientID string) (sarama.ConsumerGroup, sarama.Client, error) {
+func NewConsumerGroup(
+	brokers []string,
+	groupID, clientID string,
+) (sarama.ConsumerGroup, sarama.Client, error) {
 	cfg := baseConfig(clientID)
 	cfg.Consumer.Group.Rebalance.GroupStrategies = []sarama.BalanceStrategy{
 		sarama.NewBalanceStrategySticky(),
@@ -75,7 +87,13 @@ func NewConsumerGroup(brokers []string, groupID, clientID string) (sarama.Consum
 	return group, client, nil
 }
 
-func RunConsumerGroup(ctx context.Context, group sarama.ConsumerGroup, topics []string, logger *slog.Logger, handler sarama.ConsumerGroupHandler) error {
+func RunConsumerGroup(
+	ctx context.Context,
+	group sarama.ConsumerGroup,
+	topics []string,
+	logger *slog.Logger,
+	handler sarama.ConsumerGroupHandler,
+) error {
 	errCh := group.Errors()
 	if errCh != nil {
 		go func() {
@@ -84,6 +102,12 @@ func RunConsumerGroup(ctx context.Context, group sarama.ConsumerGroup, topics []
 			}
 		}()
 	}
+
+	defer func() {
+		if err := group.Close(); err != nil {
+			logger.Error("kafka consumer group close failed", "error", err)
+		}
+	}()
 
 	for {
 		if err := group.Consume(ctx, topics, handler); err != nil {
